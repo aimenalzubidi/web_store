@@ -5,12 +5,14 @@ class Sidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemSelected;
   final VoidCallback onLogout;
+  final bool hasPendingOrders;
 
   const Sidebar({
     Key? key,
     required this.selectedIndex,
     required this.onItemSelected,
     required this.onLogout,
+    this.hasPendingOrders = false,
   }) : super(key: key);
 
   @override
@@ -49,6 +51,7 @@ class Sidebar extends StatelessWidget {
             icon: Icons.shopping_cart_outlined,
             title: 'الطلبات',
             isSelected: selectedIndex == 1,
+            showBadge: hasPendingOrders,
             onTap: () => onItemSelected(1),
           ),
           _SidebarItem(
@@ -80,6 +83,7 @@ class _SidebarItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final bool isDanger;
+  final bool showBadge;
 
   const _SidebarItem({
     required this.icon,
@@ -87,6 +91,7 @@ class _SidebarItem extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.isDanger = false,
+    this.showBadge = false,
   });
 
   @override
@@ -107,11 +112,32 @@ class _SidebarItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: isDanger
-                  ? AppColors.danger
-                  : (isSelected ? AppColors.primary : Colors.white70),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  color: isDanger
+                      ? AppColors.danger
+                      : (isSelected ? AppColors.primary : Colors.white70),
+                ),
+                if (showBadge)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 8,
+                        minHeight: 8,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 16),
             Text(

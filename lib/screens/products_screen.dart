@@ -87,6 +87,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void _showAddDialog(BuildContext context) {
     final nameC = TextEditingController();
     final priceC = TextEditingController();
+    final descriptionC = TextEditingController();
+    final stockC = TextEditingController( );
     Uint8List? _pickedImage;
     bool _isProcessing = false;
 
@@ -95,8 +97,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           title: const Text('إضافة منتج'),
-
-          // 🔥 FIX بدون تغيير التصميم
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           content: SizedBox(
             width: 400,
             child: SingleChildScrollView(
@@ -105,16 +108,39 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 children: [
                   TextField(
                     controller: nameC,
-                    decoration: const InputDecoration(labelText: 'الاسم'),
+                    decoration: const InputDecoration(
+                      labelText: 'الاسم',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: priceC,
-                    decoration: const InputDecoration(labelText: 'السعر'),
+                    decoration: const InputDecoration(
+                      labelText: 'السعر',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionC,
+                    decoration: const InputDecoration(
+                      labelText: 'الوصف',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: stockC,
+                    decoration: const InputDecoration(
+                      labelText: 'المخزون',
+                      border: OutlineInputBorder(),
+                    ),
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 16),
-
                   Container(
                     height: 150,
                     width: double.maxFinite,
@@ -123,7 +149,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: _pickedImage != null
-                        ? Image.memory(_pickedImage!, fit: BoxFit.cover)
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _pickedImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
                         : InkWell(
                             onTap: () async {
                               final result = await FilePicker.platform
@@ -138,7 +170,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               }
                             },
                             child: const Center(
-                              child: Icon(Icons.add_photo_alternate),
+                              child: Icon(
+                                Icons.add_photo_alternate,
+                                size: 40,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                   ),
@@ -146,35 +182,50 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
             ),
           ),
-
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: _isProcessing ? null : () => Navigator.pop(ctx),
               child: const Text('إلغاء'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                if (nameC.text.isEmpty) return;
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              onPressed: _isProcessing
+                  ? null
+                  : () async {
+                      if (nameC.text.isEmpty) return;
+                      setDialogState(() => _isProcessing = true);
 
-                final doc = await FirebaseFirestore.instance
-                    .collection('products')
-                    .add({
-                      'name': nameC.text,
-                      'price': double.tryParse(priceC.text) ?? 0,
-                      'imageUrl': null,
-                      'stock': 0,
-                    });
+                      final doc = await FirebaseFirestore.instance
+                          .collection('products')
+                          .add({
+                            'name': nameC.text,
+                            'price': double.tryParse(priceC.text) ?? 0,
+                            'description': descriptionC.text,
+                            'stock': int.tryParse(stockC.text) ??0,
+                            'imageUrl': null,
+                          });
 
-                if (_pickedImage != null) {
-                  String? base64 = await _imageToBase64(_pickedImage);
-                  await doc.update({
-                    'imageUrl': 'data:image/png;base64,$base64',
-                  });
-                }
+                      if (_pickedImage != null) {
+                        String? base64 = await _imageToBase64(_pickedImage);
+                        await doc.update({
+                          'imageUrl': 'data:image/png;base64,$base64',
+                        });
+                      }
 
-                Navigator.pop(ctx);
-              },
-              child: const Text('حفظ'),
+                      Navigator.pop(ctx);
+                    },
+              child: _isProcessing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('حفظ', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -186,6 +237,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void _showEditDialog(BuildContext context, Product product) {
     final nameC = TextEditingController(text: product.name);
     final priceC = TextEditingController(text: product.price.toString());
+    final descriptionC = TextEditingController(text: product.description);
+    final stockC = TextEditingController(text: product.stock.toString());
     Uint8List? _pickedImage;
     String _currentImageUrl = product.imageUrl ?? '';
     bool _isProcessing = false;
@@ -216,6 +269,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     controller: priceC,
                     decoration: const InputDecoration(
                       labelText: 'السعر',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionC,
+                    decoration: const InputDecoration(
+                      labelText: 'الوصف',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: stockC,
+                    decoration: const InputDecoration(
+                      labelText: 'المخزون',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.number,
@@ -352,6 +423,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           .update({
                             'name': nameC.text,
                             'price': double.tryParse(priceC.text) ?? 0,
+                            'description': descriptionC.text,
+                            'stock': int.tryParse(stockC.text) ?? 0,
                           });
 
                       // تحديث الصورة إذا تم اختيار صورة جديدة

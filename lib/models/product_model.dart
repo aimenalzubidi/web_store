@@ -4,6 +4,7 @@ class Product {
   final double price;
   final String? imageUrl;
   final int stock;
+  final String description;
 
   Product({
     required this.id,
@@ -11,6 +12,7 @@ class Product {
     required this.price,
     this.imageUrl,
     this.stock = 0,
+    this.description = '',
   });
 
   factory Product.fromMap(Map<String, dynamic> map, String docId) {
@@ -20,6 +22,7 @@ class Product {
       price: (map['price'] ?? 0).toDouble(),
       imageUrl: map['imageUrl'],
       stock: map['stock'] ?? 0,
+      description: map['description'] ?? '',
     );
   }
 
@@ -29,6 +32,7 @@ class Product {
       'price': price,
       'imageUrl': imageUrl,
       'stock': stock,
+      'description': description,
     };
   }
 
@@ -38,6 +42,7 @@ class Product {
     double? price,
     String? imageUrl,
     int? stock,
+    String? description,
   }) {
     return Product(
       id: id ?? this.id,
@@ -45,6 +50,7 @@ class Product {
       price: price ?? this.price,
       imageUrl: imageUrl ?? this.imageUrl,
       stock: stock ?? this.stock,
+      description: description ?? this.description,
     );
   }
 }
